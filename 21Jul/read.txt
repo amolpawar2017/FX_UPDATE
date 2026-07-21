@@ -1,1 +1,11 @@
+Bundle contents:
 
+ROOT.war — the Spring Boot backend with the Angular production build embedded as static resources; one WAR serves both UI (/) and API (/api/**)
+oracle/schema.sql + 01_create_portal_user.sql — plain DDL provisioning route
+oracle/sdmx_portal_schema.dmp + 02_import_schema.sh — Data Pump provisioning route (empty schema, 0 rows, all 12 tables/indexes/14 FK constraints)
+README.md — Tomcat deployment steps, env var config table, FMR note (separate BIS-licensed WAR, not bundled), verification commands
+Verified, not just assumed:
+
+Deployed ROOT.war on a stock, unmodified tomcat:10.1-jdk21 container against the real Oracle DB — confirmed Spring Boot starts, JPA/Hikari connects, the SPA loads at /, a deep-link route (/mapping/123) correctly falls back to index.html, static assets return 200, and /api/** correctly requires auth (401 → 200 with credentials, real job data returned)
+Both Oracle provisioning routes (DDL script and Data Pump .dmp) tested independently against fresh scratch schemas — both produce identical table/index/constraint structure
+Confirmed the running dev database (with existing test data) was untouched throughout
