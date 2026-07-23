@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mes:Structure xmlns:mes="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/message"
+               xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/structure"
+               xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/common"
+               xmlns:xml="http://www.w3.org/XML/1998/namespace">
+  <mes:Header>
+    <mes:ID>SAMPLE_CODELISTS</mes:ID>
+    <mes:Test>false</mes:Test>
+    <mes:Prepared>2026-07-18T00:00:00Z</mes:Prepared>
+    <mes:Sender id="BIS"/>
+  </mes:Header>
+  <mes:Structures>
+    <str:Codelists>
+
+      <str:Codelist urn="urn:sdmx:org.sdmx.infomodel.codelist.Codelist=BIS:CL_FREQ(1.0)"
+                    agencyID="BIS" id="CL_FREQ" version="1.0" isFinal="true" isExternalReference="false">
+        <com:Name xml:lang="en">Frequency</com:Name>
+        <str:Code urn="urn:sdmx:org.sdmx.infomodel.codelist.Code=BIS:CL_FREQ(1.0).M" id="M">
+          <com:Name xml:lang="en">Monthly</com:Name>
+        </str:Code>
+        <str:Code urn="urn:sdmx:org.sdmx.infomodel.codelist.Code=BIS:CL_FREQ(1.0).Q" id="Q">
+          <com:Name xml:lang="en">Quarterly</com:Name>
+        </str:Code>
+        <str:Code urn="urn:sdmx:org.sdmx.infomodel.codelist.Code=BIS:CL_FREQ(1.0).A" id="A">
+          <com:Name xml:lang="en">Annual</com:Name>
+        </str:Code>
+      </str:Codelist>
+
+      <str:Codelist urn="urn:sdmx:org.sdmx.infomodel.codelist.Codelist=BIS:CL_REF_AREA(1.0)"
+                    agencyID="BIS" id="CL_REF_AREA" version="1.0" isFinal="true" isExternalReference="false">
+        <com:Name xml:lang="en">Reference Area</com:Name>
+        <str:Code urn="urn:sdmx:org.sdmx.infomodel.codelist.Code=BIS:CL_REF_AREA(1.0).ZA" id="ZA">
+          <com:Name xml:lang="en">South Africa</com:Name>
+        </str:Code>
+        <str:Code urn="urn:sdmx:org.sdmx.infomodel.codelist.Code=BIS:CL_REF_AREA(1.0).US" id="US">
+          <com:Name xml:lang="en">United States</com:Name>
+        </str:Code>
+        <str:Code urn="urn:sdmx:org.sdmx.infomodel.codelist.Code=BIS:CL_REF_AREA(1.0).GB" id="GB">
+          <com:Name xml:lang="en">United Kingdom</com:Name>
+        </str:Code>
+      </str:Codelist>
+
+      <str:Codelist urn="urn:sdmx:org.sdmx.infomodel.codelist.Codelist=BIS:CL_RESIDENCY(1.0)"
+                    agencyID="BIS" id="CL_RESIDENCY" version="1.0" isFinal="true" isExternalReference="false">
+        <com:Name xml:lang="en">Residency Status</com:Name>
+        <str:Code urn="urn:sdmx:org.sdmx.infomodel.codelist.Code=BIS:CL_RESIDENCY(1.0).RESIDENT" id="RESIDENT">
+          <com:Name xml:lang="en">Resident</com:Name>
+        </str:Code>
+        <str:Code urn="urn:sdmx:org.sdmx.infomodel.codelist.Code=BIS:CL_RESIDENCY(1.0).NON_RESIDENT" id="NON_RESIDENT">
+          <com:Name xml:lang="en">Non-Resident</com:Name>
+        </str:Code>
+        <str:Code urn="urn:sdmx:org.sdmx.infomodel.codelist.Code=BIS:CL_RESIDENCY(1.0).RES_HOUSEHOLD" id="RES_HOUSEHOLD">
+          <com:Name xml:lang="en">Resident - Household Sector</com:Name>
+        </str:Code>
+        <str:Code urn="urn:sdmx:org.sdmx.infomodel.codelist.Code=BIS:CL_RESIDENCY(1.0).RES_CORPORATE" id="RES_CORPORATE">
+          <com:Name xml:lang="en">Resident - Corporate Sector</com:Name>
+        </str:Code>
+        <str:Code urn="urn:sdmx:org.sdmx.infomodel.codelist.Code=BIS:CL_RESIDENCY(1.0).NONRES_BANK" id="NONRES_BANK">
+          <com:Name xml:lang="en">Non-Resident - Bank</com:Name>
+        </str:Code>
+        <str:Code urn="urn:sdmx:org.sdmx.infomodel.codelist.Code=BIS:CL_RESIDENCY(1.0).NONRES_OTHER" id="NONRES_OTHER">
+          <com:Name xml:lang="en">Non-Resident - Other</com:Name>
+        </str:Code>
+      </str:Codelist>
+
+      <str:Codelist urn="urn:sdmx:org.sdmx.infomodel.codelist.Codelist=BIS:CL_CONF_STATUS(1.0)"
+                    agencyID="BIS" id="CL_CONF_STATUS" version="1.0" isFinal="true" isExternalReference="false">
+        <com:Name xml:lang="en">Confidentiality Status</com:Name>
+        <str:Code urn="urn:sdmx:org.sdmx.infomodel.codelist.Code=BIS:CL_CONF_STATUS(1.0).F" id="F">
+          <com:Name xml:lang="en">Free</com:Name>
+        </str:Code>
+        <str:Code urn="urn:sdmx:org.sdmx.infomodel.codelist.Code=BIS:CL_CONF_STATUS(1.0).C" id="C">
+          <com:Name xml:lang="en">Confidential</com:Name>
+        </str:Code>
+      </str:Codelist>
+
+    </str:Codelists>
+  </mes:Structures>
+</mes:Structure>
