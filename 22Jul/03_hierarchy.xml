@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mes:Structure xmlns:mes="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/message"
+               xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/structure"
+               xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/common"
+               xmlns:xml="http://www.w3.org/XML/1998/namespace">
+  <mes:Header>
+    <mes:ID>SAMPLE_HIERARCHY</mes:ID>
+    <mes:Test>false</mes:Test>
+    <mes:Prepared>2026-07-18T00:00:00Z</mes:Prepared>
+    <mes:Sender id="BIS"/>
+  </mes:Header>
+  <mes:Structures>
+    <str:Hierarchies>
+      <str:Hierarchy urn="urn:sdmx:org.sdmx.infomodel.hierarchicalcodelist.Hierarchy=BIS:RESIDENCY_HIERARCHY(1.0)"
+                     agencyID="BIS" id="RESIDENCY_HIERARCHY" version="1.0" isFinal="true" isExternalReference="false">
+        <com:Name xml:lang="en">Residency Hierarchy</com:Name>
+
+        <str:HierarchicalCode urn="urn:sdmx:org.sdmx.infomodel.hierarchicalcodelist.HierarchicalCode=BIS:RESIDENCY_HIERARCHY(1.0).H_RESIDENT" id="H_RESIDENT">
+          <str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=BIS:CL_RESIDENCY(1.0).RESIDENT</str:Code>
+          <str:HierarchicalCode urn="urn:sdmx:org.sdmx.infomodel.hierarchicalcodelist.HierarchicalCode=BIS:RESIDENCY_HIERARCHY(1.0).H_RES_HOUSEHOLD" id="H_RES_HOUSEHOLD">
+            <str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=BIS:CL_RESIDENCY(1.0).RES_HOUSEHOLD</str:Code>
+          </str:HierarchicalCode>
+          <str:HierarchicalCode urn="urn:sdmx:org.sdmx.infomodel.hierarchicalcodelist.HierarchicalCode=BIS:RESIDENCY_HIERARCHY(1.0).H_RES_CORPORATE" id="H_RES_CORPORATE">
+            <str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=BIS:CL_RESIDENCY(1.0).RES_CORPORATE</str:Code>
+          </str:HierarchicalCode>
+        </str:HierarchicalCode>
+
+        <str:HierarchicalCode urn="urn:sdmx:org.sdmx.infomodel.hierarchicalcodelist.HierarchicalCode=BIS:RESIDENCY_HIERARCHY(1.0).H_NON_RESIDENT" id="H_NON_RESIDENT">
+          <str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=BIS:CL_RESIDENCY(1.0).NON_RESIDENT</str:Code>
+          <str:HierarchicalCode urn="urn:sdmx:org.sdmx.infomodel.hierarchicalcodelist.HierarchicalCode=BIS:RESIDENCY_HIERARCHY(1.0).H_NONRES_BANK" id="H_NONRES_BANK">
+            <str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=BIS:CL_RESIDENCY(1.0).NONRES_BANK</str:Code>
+          </str:HierarchicalCode>
+          <str:HierarchicalCode urn="urn:sdmx:org.sdmx.infomodel.hierarchicalcodelist.HierarchicalCode=BIS:RESIDENCY_HIERARCHY(1.0).H_NONRES_OTHER" id="H_NONRES_OTHER">
+            <str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=BIS:CL_RESIDENCY(1.0).NONRES_OTHER</str:Code>
+          </str:HierarchicalCode>
+        </str:HierarchicalCode>
+
+      </str:Hierarchy>
+    </str:Hierarchies>
+  </mes:Structures>
+</mes:Structure>
