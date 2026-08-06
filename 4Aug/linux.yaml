@@ -1,0 +1,152 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /fx-processor
+
+spring:
+  application:
+    name: fx-transaction-processor
+
+  datasource:
+    url: ${DB_URL:jdbc:oracle:thin:@localhost:1521/XEPDB1}
+    driver-class-name: oracle.jdbc.OracleDriver
+    username: ${DB_USERNAME:fxuser}
+    password: ${DB_PASSWORD:changeme}
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        dialect: org.hibernate.dialect.Oracle12cDialect
+        jdbc:
+          batch_size: 20
+          time_zone: UTC
+        order_inserts: true
+        order_updates: true
+        timezone:
+          default_storage: NORMALIZE_UTC
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: ${KAFKA_CONSUMER_GROUP:fx-transaction-processor}
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      enable-auto-commit: false
+      max-poll-records: 500
+      session-timeout-ms: 30000
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      retries: 3
+    properties:
+      security.protocol: ${KAFKA_SECURITY_PROTOCOL:PLAINTEXT}
+      ssl.protocol: ${KAFKA_SSL_PROTOCOL:TLSv1.3}
+      ssl.endpoint.identification.algorithm: ${KAFKA_SSL_ENDPOINT_ALGORITHM:https}
+      ssl.truststore.type: ${KAFKA_TRUSTSTORE_TYPE:PEM}
+      ssl.truststore.location: ${KAFKA_TRUSTSTORE_LOCATION:}
+      sasl.mechanism: ${KAFKA_SASL_MECHANISM:PLAIN}
+      sasl.jaas.config: ${KAFKA_SASL_JAAS_CONFIG:}
+    ssl:
+      trust-store-location: ${KAFKA_TRUSTSTORE_LOCATION:}
+      trust-store-password: ${KAFKA_TRUSTSTORE_PASSWORD:}
+      key-store-location: ${KAFKA_KEYSTORE_LOCATION:}
+      key-store-password: ${KAFKA_KEYSTORE_PASSWORD:}
+      key-password: ${KAFKA_KEY_PASSWORD:}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,info,prometheus
+  endpoint:
+    health:
+      show-details: always
+
+fx:
+  topics:
+    market-data: ${FX_TOPIC_MARKET_DATA:fx-market-data}
+    pre-trade-data: ${FX_TOPIC_PRE_TRADE_DATA:fx-pre-trade-data}
+    post-trade-data: ${FX_TOPIC_POST_TRADE_DATA:fx-post-trade-data}
+  processor:
+    event:
+      async-pool-size: 20
+      max-retry-attempts: 3
+    monitoring:
+      enabled: true
+      websocket-enabled: true
+    kafka:
+      health-check:
+        enabled: true
+        interval-ms: 30000
+        max-consecutive-failures: 3
+        restart-delay-ms: 5000
+      admin-timeout-ms: 10000
+
+app:
+  store:
+    backend: ${APP_STORE_BACKEND:oracle}
+  history:
+    max-results: 2000
+
+oracle:
+  batch:
+    size: 500
+    recent-interval-ms: 300000
+
+parquet:
+  base-path: ${PARQUET_BASE_PATH:/opt/fx-processor/data/intraday}
+  compression: SNAPPY
+  row-group-size: 134217728
+  page-size: 1048576
+  enable-dictionary: true
+
+indicator:
+  parquet:
+    base-path: ${INDICATOR_PARQUET_PATH:/opt/fx-processor/data/indicators}
+  python:
+    enabled: true
+    host: ${PYTHON_INDICATOR_HOST:localhost}
+    executable: ${PYTHON_EXECUTABLE:/opt/fx-processor/venv/bin/python}
+    script-path: ${PYTHON_SCRIPT_PATH:/opt/fx-processor/indicator_service/main.py}
+    port: ${PYTHON_INDICATOR_PORT:8081}
+    timeout-ms: 5000
+    startup-wait-seconds: 15
+    watchdog-interval-seconds: 30
+    shutdown-timeout-seconds: 10
+    health-check-interval-ms: 500
+    max-consecutive-failures: 3
+    restart-delay-ms: 5000
+
+fame:
+  service:
+    url: ${FAME_SERVICE_URL:http://localhost:8082}
+    timeout-ms: ${FAME_TIMEOUT_MS:60000}
+    retry-attempts: ${FAME_RETRY_ATTEMPTS:3}
+    retry-delay-ms: ${FAME_RETRY_DELAY_MS:1000}
+  compiler:
+    timeout-ms: ${FAME_COMPILER_TIMEOUT_MS:120000}
+
+logging:
+  level:
+    com.fx.processor: INFO
+    org.springframework.kafka: WARN
+    org.hibernate: WARN
+  file:
+    name: /opt/fx-processor/logs/application.log
+  logback:
+    rollingpolicy:
+      max-file-size: 50MB
+      max-history: 30
+      total-size-cap: 2GB
