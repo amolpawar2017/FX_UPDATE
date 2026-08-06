@@ -1,13 +1,65 @@
+#!/bin/bash
+# ============================================================
+#  FX Transaction Processor — Tomcat environment (Linux)
+#  Placed in <tomcat>/bin/setenv.sh  (Tomcat auto-sources it)
+#
+#  Edit the variables below to match your environment, then
+#  run start.sh from the deploy/local-tomcat folder.
+# ============================================================
+
+# ── Spring profile ────────────────────────────────────────────────────────
+export SPRING_PROFILES_ACTIVE="linux"
+
+# ── Oracle ────────────────────────────────────────────────────────────────
+export DB_URL="jdbc:oracle:thin:@//YOUR_ORACLE_HOST:1521/YOUR_SERVICE_NAME"
+export DB_USERNAME="fxuser"
+export DB_PASSWORD="CHANGE_ME"
+
 # ── Kafka ─────────────────────────────────────────────────────────────────
-export KAFKA_BOOTSTRAP_SERVERS="YOUR_KAFKA_HOST:9093"       # ← change this
+export KAFKA_BOOTSTRAP_SERVERS="YOUR_KAFKA_HOST:9093"
 export KAFKA_CONSUMER_GROUP="fx-transaction-processor"
+
+# For plain SSL with PEM:
 export KAFKA_SECURITY_PROTOCOL="SSL"
 
-# SSL — PEM truststore (broker CA certificate)
-export SPRING_KAFKA_PROPERTIES_SSL_TRUSTSTORE_TYPE="PEM"
-export SPRING_KAFKA_PROPERTIES_SSL_TRUSTSTORE_LOCATION="/opt/fx-certs/ca.pem"   # ← change this
-export SPRING_KAFKA_PROPERTIES_SSL_PROTOCOL="TLSv1.3"
-export SPRING_KAFKA_PROPERTIES_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM="https"
+# For SASL + SSL, comment the line above and uncomment below:
+# export KAFKA_SECURITY_PROTOCOL="SASL_SSL"
+# export KAFKA_SASL_MECHANISM="PLAIN"
+# export KAFKA_SASL_JAAS_CONFIG="org.apache.kafka.common.security.plain.PlainLoginModule required username='YOUR_KEY' password='YOUR_SECRET';"
 
+# SSL — PEM truststore
+export KAFKA_SSL_PROTOCOL="TLSv1.3"
 export KAFKA_SSL_ENDPOINT_ALGORITHM="https"
-export KAFKA_TRUSTSTORE_LOCATION="/opt/fx-certs/ca.pem"     # ← same pem path
+export KAFKA_TRUSTSTORE_TYPE="PEM"
+export KAFKA_TRUSTSTORE_LOCATION="/opt/fx-certs/ca.pem"
+
+# ── Topic names ────────────────────────────────────────────────────────────
+export FX_TOPIC_MARKET_DATA="fx-market-data"
+export FX_TOPIC_PRE_TRADE_DATA="fx-pre-trade-data"
+export FX_TOPIC_POST_TRADE_DATA="fx-post-trade-data"
+
+# ── Data storage paths ─────────────────────────────────────────────────────
+export PARQUET_BASE_PATH="/opt/fx-processor/data/intraday"
+export INDICATOR_PARQUET_PATH="/opt/fx-processor/data/indicators"
+export APP_STORE_BACKEND="oracle"
+
+# ── Python indicator service ───────────────────────────────────────────────
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BUNDLE_DIR="$(dirname "$SCRIPT_DIR")"
+export PYTHON_EXECUTABLE="$BUNDLE_DIR/indicator_service/venv/bin/python"
+export PYTHON_SCRIPT_PATH="$BUNDLE_DIR/indicator_service/main.py"
+export PYTHON_INDICATOR_PORT="8081"
+
+# ── Java ──────────────────────────────────────────────────────────────────
+if [ -x "$BUNDLE_DIR/runtime/bin/java" ]; then
+    export JAVA_HOME="$BUNDLE_DIR/runtime"
+fi
+
+# ── FAME (uncomment when TimeIQ is available) ──────────────────────────────
+# export FAME_SERVICE_URL="http://YOUR_FAME_HOST:8082"
+
+# ── JVM tuning ─────────────────────────────────────────────────────────────
+export JAVA_OPTS="-server -Xms512m -Xmx1024m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -Djava.awt.headless=true"
+
+# ── Logging ────────────────────────────────────────────────────────────────
+export LOGGING_FILE_NAME="/opt/fx-processor/logs/application.log"
