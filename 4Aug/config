@@ -1,0 +1,13 @@
+# ── Kafka ─────────────────────────────────────────────────────────────────
+export KAFKA_BOOTSTRAP_SERVERS="YOUR_KAFKA_HOST:9093"       # ← change this
+export KAFKA_CONSUMER_GROUP="fx-transaction-processor"
+export KAFKA_SECURITY_PROTOCOL="SSL"
+
+# SSL — PEM truststore (broker CA certificate)
+export SPRING_KAFKA_PROPERTIES_SSL_TRUSTSTORE_TYPE="PEM"
+export SPRING_KAFKA_PROPERTIES_SSL_TRUSTSTORE_LOCATION="/opt/fx-certs/ca.pem"   # ← change this
+export SPRING_KAFKA_PROPERTIES_SSL_PROTOCOL="TLSv1.3"
+export SPRING_KAFKA_PROPERTIES_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM="https"
+
+export KAFKA_SSL_ENDPOINT_ALGORITHM="https"
+export KAFKA_TRUSTSTORE_LOCATION="/opt/fx-certs/ca.pem"     # ← same pem path
