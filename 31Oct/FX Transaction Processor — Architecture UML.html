@@ -1,0 +1,998 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FX Transaction Processor — Architecture UML</title>
+<style>
+:root {
+  --bg: #f8f7f4;
+  --surface: #ffffff;
+  --surface2: #f1f0ec;
+  --text: #1a1a18;
+  --text2: #5c5c58;
+  --text3: #8c8c88;
+  --border: #d8d6ce;
+  --border2: #b8b6ae;
+  --accent: #2563eb;
+  --accent-bg: #eff6ff;
+  --kafka: #e76f1b;
+  --kafka-bg: #fff4ec;
+  --oracle: #c0392b;
+  --oracle-bg: #fef2f2;
+  --angular: #c2185b;
+  --angular-bg: #fce4ec;
+  --spring: #388e3c;
+  --spring-bg: #e8f5e9;
+  --fame: #7b3fa0;
+  --fame-bg: #f3e8fd;
+  --r: 8px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #18181a;
+    --surface: #242428;
+    --surface2: #2c2c30;
+    --text: #e8e6e0;
+    --text2: #a0a09a;
+    --text3: #6c6c68;
+    --border: #3c3c40;
+    --border2: #4c4c50;
+    --accent: #60a5fa;
+    --accent-bg: #1e3a5f;
+    --kafka: #f59e3a;
+    --kafka-bg: #3a200a;
+    --oracle: #f87171;
+    --oracle-bg: #3a1010;
+    --angular: #f48fb1;
+    --angular-bg: #3a1030;
+    --spring: #81c784;
+    --spring-bg: #1a3a1c;
+    --fame: #c084fc;
+    --fame-bg: #2d1050;
+    --shadow: 0 1px 3px rgba(0,0,0,0.3);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #18181a; --surface: #242428; --surface2: #2c2c30;
+  --text: #e8e6e0; --text2: #a0a09a; --text3: #6c6c68;
+  --border: #3c3c40; --border2: #4c4c50; --accent: #60a5fa; --accent-bg: #1e3a5f;
+  --kafka: #f59e3a; --kafka-bg: #3a200a; --oracle: #f87171; --oracle-bg: #3a1010;
+  --angular: #f48fb1; --angular-bg: #3a1030; --spring: #81c784; --spring-bg: #1a3a1c;
+  --fame: #c084fc; --fame-bg: #2d1050; --shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+:root[data-theme="light"] {
+  --bg: #f8f7f4; --surface: #ffffff; --surface2: #f1f0ec;
+  --text: #1a1a18; --text2: #5c5c58; --text3: #8c8c88;
+  --border: #d8d6ce; --border2: #b8b6ae; --accent: #2563eb; --accent-bg: #eff6ff;
+  --kafka: #e76f1b; --kafka-bg: #fff4ec; --oracle: #c0392b; --oracle-bg: #fef2f2;
+  --angular: #c2185b; --angular-bg: #fce4ec; --spring: #388e3c; --spring-bg: #e8f5e9;
+  --fame: #7b3fa0; --fame-bg: #f3e8fd; --shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; line-height: 1.5; }
+
+.h2.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+
+header {
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  background: var(--surface); position: sticky; top: 0; z-index: 100;
+}
+header h1 { font-size: 15px; font-weight: 600; color: var(--text); }
+header p { font-size: 12px; color: var(--text2); margin-top: 1px; }
+
+.tabs { display: flex; gap: 2px; padding: 0; }
+.tab-btn {
+  padding: 5px 12px; border-radius: 6px; border: 1px solid transparent;
+  background: none; cursor: pointer; font-size: 12px; font-weight: 500;
+  color: var(--text2); transition: all 0.15s;
+}
+.tab-btn:hover { background: var(--surface2); color: var(--text); }
+.tab-btn.active { background: var(--accent-bg); color: var(--accent); border-color: var(--accent); }
+
+.view { display: none; padding: 20px; }
+.view.active { display: block; }
+
+/* Legend */
+.legend { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; align-items: center; }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text2); }
+.legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+/* Diagram canvas */
+.diagram-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); padding: 16px; }
+.diagram-wrap svg { display: block; min-width: 900px; }
+
+/* Class cards */
+.class-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+.class-card {
+  border: 1px solid var(--border); border-radius: var(--r); background: var(--surface);
+  overflow: hidden; box-shadow: var(--shadow);
+}
+.class-card-header {
+  padding: 8px 12px; font-weight: 600; font-size: 12px; letter-spacing: 0.01em;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+.class-card-header .layer-badge {
+  font-size: 10px; font-weight: 500; padding: 1px 6px; border-radius: 10px;
+}
+.class-card-body { padding: 8px 12px; }
+.field-row { display: flex; align-items: center; gap: 8px; padding: 2px 0; border-bottom: 1px solid var(--surface2); }
+.field-row:last-child { border-bottom: none; }
+.field-vis { font-size: 11px; color: var(--text3); font-family: monospace; width: 10px; flex-shrink: 0; }
+.field-name { font-size: 12px; color: var(--text); font-weight: 500; min-width: 120px; }
+.field-type { font-size: 11px; color: var(--text2); font-family: monospace; }
+
+/* Relationship table */
+.rel-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.rel-table th { text-align: left; padding: 6px 10px; border-bottom: 2px solid var(--border); color: var(--text2); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
+.rel-table td { padding: 6px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.rel-table tr:last-child td { border-bottom: none; }
+.rel-table tr:hover td { background: var(--surface2); }
+.rel-badge { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 10px; font-weight: 600; }
+
+.search-row { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+.search-box { flex: 1; padding: 7px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); font-size: 13px; outline: none; }
+.search-box:focus { border-color: var(--accent); }
+.filter-select { padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); font-size: 12px; outline: none; cursor: pointer; }
+
+.empty-state { text-align: center; color: var(--text3); padding: 40px; font-size: 13px; }
+
+/* Flow diagram styles in SVG */
+</style>
+</head>
+<body>
+<h2 class="sr-only">FX Transaction Processor — Architecture UML Diagram showing entities, services, controllers, and pipeline flow</h2>
+
+<header>
+  <div>
+    <h1>FX Transaction Processor — Architecture UML</h1>
+    <p>Angular 21 · Spring Boot 3.2 · Java 17 · Oracle DB · Apache Kafka</p>
+  </div>
+  <div class="tabs" role="tablist">
+    <button class="tab-btn active" onclick="switchTab('pipeline')" role="tab" aria-selected="true">Pipeline flow</button>
+    <button class="tab-btn" onclick="switchTab('entities')" role="tab">Entities</button>
+    <button class="tab-btn" onclick="switchTab('services')" role="tab">Services</button>
+    <button class="tab-btn" onclick="switchTab('classes')" role="tab">Class detail</button>
+    <button class="tab-btn" onclick="switchTab('relations')" role="tab">Relationships</button>
+  </div>
+</header>
+
+<!-- TAB 1: Pipeline flow -->
+<div id="tab-pipeline" class="view active">
+  <div class="legend">
+    <span style="font-size:11px;font-weight:600;color:var(--text2)">Legend:</span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--angular)"></span>Angular 21 frontend</span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--spring)"></span>Spring Boot services</span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--kafka)"></span>Kafka pipeline</span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--oracle)"></span>Oracle / persistence</span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--fame)"></span>FAME / external store</span>
+  </div>
+  <div class="diagram-wrap">
+    <svg width="100%" viewBox="0 0 1100 820" role="img">
+      <title>FX Processor end-to-end pipeline flow</title>
+      <desc>Shows data flowing from Kafka topics through consumers, dedup, rule engine, Oracle DB, and out to Angular UI via REST controllers</desc>
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+
+      <!-- ── ROW 0: Kafka sources ── -->
+      <text x="550" y="22" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text3)" font-family="sans-serif">KAFKA TOPICS (External sources)</text>
+      <!-- MarketTrades -->
+      <rect x="40" y="32" width="140" height="44" rx="6" fill="var(--kafka-bg)" stroke="var(--kafka)" stroke-width="1"/>
+      <text x="110" y="51" text-anchor="middle" font-size="12" font-weight="600" fill="var(--kafka)" font-family="sans-serif">MarketTrades</text>
+      <text x="110" y="66" text-anchor="middle" font-size="10" fill="var(--kafka)" font-family="sans-serif">Market data feed</text>
+      <!-- PreTrades -->
+      <rect x="210" y="32" width="140" height="44" rx="6" fill="var(--kafka-bg)" stroke="var(--kafka)" stroke-width="1"/>
+      <text x="280" y="51" text-anchor="middle" font-size="12" font-weight="600" fill="var(--kafka)" font-family="sans-serif">PreTrades</text>
+      <text x="280" y="66" text-anchor="middle" font-size="10" fill="var(--kafka)" font-family="sans-serif">Pre-trade orders</text>
+      <!-- PostTrades -->
+      <rect x="380" y="32" width="140" height="44" rx="6" fill="var(--kafka-bg)" stroke="var(--kafka)" stroke-width="1"/>
+      <text x="450" y="51" text-anchor="middle" font-size="12" font-weight="600" fill="var(--kafka)" font-family="sans-serif">PostTrades</text>
+      <text x="450" y="66" text-anchor="middle" font-size="10" fill="var(--kafka)" font-family="sans-serif">Executed trades</text>
+      <!-- TopicConfigurations label -->
+      <rect x="560" y="32" width="170" height="44" rx="6" fill="var(--surface2)" stroke="var(--border2)" stroke-width="1" stroke-dasharray="4 3"/>
+      <text x="645" y="51" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text2)" font-family="sans-serif">topic_configurations</text>
+      <text x="645" y="66" text-anchor="middle" font-size="10" fill="var(--text3)" font-family="sans-serif">DB-driven consumer config</text>
+
+      <!-- ── ROW 1: Dynamic Kafka Consumer ── -->
+      <line x1="110" y1="76" x2="110" y2="116" stroke="var(--kafka)" stroke-width="1.5" marker-end="url(#arr)"/>
+      <line x1="280" y1="76" x2="280" y2="116" stroke="var(--kafka)" stroke-width="1.5" marker-end="url(#arr)"/>
+      <line x1="450" y1="76" x2="450" y2="116" stroke="var(--kafka)" stroke-width="1.5" marker-end="url(#arr)"/>
+      <line x1="645" y1="76" x2="560" y2="140" stroke="var(--border2)" stroke-width="1" stroke-dasharray="3 3"/>
+
+      <rect x="40" y="116" width="560" height="52" rx="8" fill="var(--spring-bg)" stroke="var(--spring)" stroke-width="1.5"/>
+      <text x="320" y="137" text-anchor="middle" font-size="13" font-weight="700" fill="var(--spring)" font-family="sans-serif">DynamicKafkaConsumerService</text>
+      <text x="320" y="154" text-anchor="middle" font-size="10" fill="var(--spring)" font-family="sans-serif">SASL_SSL / TLSv1.3 · Dynamic consumer registration from DB · Dispatches to handlers</text>
+
+      <!-- ── ROW 2: Message model ── -->
+      <line x1="320" y1="168" x2="320" y2="204" stroke="var(--spring)" stroke-width="1.5" marker-end="url(#arr)"/>
+      <rect x="130" y="204" width="380" height="38" rx="6" fill="var(--surface2)" stroke="var(--border2)" stroke-width="1"/>
+      <text x="320" y="224" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text)" font-family="sans-serif">FxMessage / FxTickMessage / MarketDataMessage / PreTradeMessage / PostTradeMessage</text>
+
+      <!-- ── ROW 3: Dedup + Validation ── -->
+      <line x1="320" y1="242" x2="230" y2="276" stroke="var(--text3)" stroke-width="1.5" marker-end="url(#arr)"/>
+      <line x1="320" y1="242" x2="440" y2="276" stroke="var(--text3)" stroke-width="1.5" marker-end="url(#arr)"/>
+
+      <rect x="80" y="276" width="210" height="52" rx="8" fill="var(--spring-bg)" stroke="var(--spring)" stroke-width="1.5"/>
+      <text x="185" y="296" text-anchor="middle" font-size="12" font-weight="600" fill="var(--spring)" font-family="sans-serif">DeduplicationService</text>
+      <text x="185" y="312" text-anchor="middle" font-size="10" fill="var(--spring)" font-family="sans-serif">Redis window · configurable keys</text>
+
+      <rect x="330" y="276" width="210" height="52" rx="8" fill="var(--spring-bg)" stroke="var(--spring)" stroke-width="1.5"/>
+      <text x="435" y="296" text-anchor="middle" font-size="12" font-weight="600" fill="var(--spring)" font-family="sans-serif">ValidationEngineService</text>
+      <text x="435" y="312" text-anchor="middle" font-size="10" fill="var(--spring)" font-family="sans-serif">ValidationRule evaluation</text>
+
+      <!-- ── ROW 4: Rule Engine + Attribute Discovery ── -->
+      <line x1="185" y1="328" x2="260" y2="362" stroke="var(--spring)" stroke-width="1.5" marker-end="url(#arr)"/>
+      <line x1="435" y1="328" x2="360" y2="362" stroke="var(--spring)" stroke-width="1.5" marker-end="url(#arr)"/>
+
+      <rect x="150" y="362" width="320" height="52" rx="8" fill="var(--spring-bg)" stroke="var(--spring)" stroke-width="1.5"/>
+      <text x="310" y="382" text-anchor="middle" font-size="13" font-weight="700" fill="var(--spring)" font-family="sans-serif">RuleEngineService</text>
+      <text x="310" y="398" text-anchor="middle" font-size="10" fill="var(--spring)" font-family="sans-serif">PolicyEngineService · Policy rules eval · Breach detection</text>
+
+      <!-- AttributeDiscovery side -->
+      <rect x="590" y="276" width="190" height="52" rx="8" fill="var(--spring-bg)" stroke="var(--spring)" stroke-width="1"/>
+      <text x="685" y="296" text-anchor="middle" font-size="11" font-weight="600" fill="var(--spring)" font-family="sans-serif">AttributeDiscoveryService</text>
+      <text x="685" y="312" text-anchor="middle" font-size="10" fill="var(--spring)" font-family="sans-serif">Discovers fields → attribute_mappings</text>
+      <line x1="600" y1="302" x2="541" y2="302" stroke="var(--border2)" stroke-width="1" stroke-dasharray="3 3" marker-end="url(#arr)"/>
+
+      <!-- ── ROW 5: Oracle Batch Writer (fan-out) ── -->
+      <line x1="310" y1="414" x2="310" y2="448" stroke="var(--spring)" stroke-width="1.5" marker-end="url(#arr)"/>
+
+      <rect x="120" y="448" width="380" height="52" rx="8" fill="var(--spring-bg)" stroke="var(--spring)" stroke-width="1.5"/>
+      <text x="310" y="468" text-anchor="middle" font-size="13" font-weight="700" fill="var(--spring)" font-family="sans-serif">OracleBatchWriterService</text>
+      <text x="310" y="484" text-anchor="middle" font-size="10" fill="var(--spring)" font-family="sans-serif">Batched JPA writes · Dead-letter queue · OracleWriteJob tracking</text>
+
+      <!-- Destination handlers (right side) -->
+      <rect x="590" y="362" width="200" height="38" rx="6" fill="var(--surface2)" stroke="var(--border2)" stroke-width="1"/>
+      <text x="690" y="376" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text)" font-family="sans-serif">DestinationHandler (interface)</text>
+      <text x="690" y="390" text-anchor="middle" font-size="10" fill="var(--text2)" font-family="sans-serif">5 implementations</text>
+      <line x1="500" y1="388" x2="588" y2="388" stroke="var(--border2)" stroke-width="1" stroke-dasharray="3 3" marker-end="url(#arr)"/>
+
+      <rect x="590" y="414" width="130" height="30" rx="5" fill="var(--surface2)" stroke="var(--border)" stroke-width="1"/>
+      <text x="655" y="432" text-anchor="middle" font-size="10" fill="var(--text2)" font-family="sans-serif">KafkaTopic</text>
+      <rect x="730" y="414" width="130" height="30" rx="5" fill="var(--surface2)" stroke="var(--border)" stroke-width="1"/>
+      <text x="795" y="432" text-anchor="middle" font-size="10" fill="var(--text2)" font-family="sans-serif">Parquet</text>
+      <rect x="590" y="454" width="130" height="30" rx="5" fill="var(--surface2)" stroke="var(--border)" stroke-width="1"/>
+      <text x="655" y="472" text-anchor="middle" font-size="10" fill="var(--text2)" font-family="sans-serif">RestApi</text>
+      <rect x="730" y="454" width="130" height="30" rx="5" fill="var(--surface2)" stroke="var(--border)" stroke-width="1"/>
+      <text x="795" y="472" text-anchor="middle" font-size="10" fill="var(--text2)" font-family="sans-serif">MessageQueue</text>
+      <rect x="660" y="494" width="130" height="30" rx="5" fill="var(--surface2)" stroke="var(--border)" stroke-width="1"/>
+      <text x="725" y="512" text-anchor="middle" font-size="10" fill="var(--text2)" font-family="sans-serif">TimeSeriesDb</text>
+      <!-- impl arrows -->
+      <line x1="655" y1="400" x2="655" y2="412" stroke="var(--border2)" stroke-width="1" marker-end="url(#arr)"/>
+      <line x1="795" y1="400" x2="795" y2="412" stroke="var(--border2)" stroke-width="1" marker-end="url(#arr)"/>
+      <line x1="655" y1="444" x2="655" y2="452" stroke="var(--border2)" stroke-width="1" marker-end="url(#arr)"/>
+      <line x1="795" y1="444" x2="795" y2="452" stroke="var(--border2)" stroke-width="1" marker-end="url(#arr)"/>
+
+      <!-- ── ROW 6: Oracle DB tables ── -->
+      <line x1="310" y1="500" x2="310" y2="536" stroke="var(--oracle)" stroke-width="1.5" marker-end="url(#arr)"/>
+
+      <text x="310" y="528" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text3)" font-family="sans-serif">ORACLE DB</text>
+      <!-- market_data -->
+      <rect x="40" y="538" width="130" height="38" rx="6" fill="var(--oracle-bg)" stroke="var(--oracle)" stroke-width="1"/>
+      <text x="105" y="554" text-anchor="middle" font-size="11" font-weight="600" fill="var(--oracle)" font-family="sans-serif">market_data</text>
+      <text x="105" y="568" text-anchor="middle" font-size="10" fill="var(--oracle)" font-family="sans-serif">40+ OHLCV fields</text>
+      <!-- pre_trade -->
+      <rect x="186" y="538" width="120" height="38" rx="6" fill="var(--oracle-bg)" stroke="var(--oracle)" stroke-width="1"/>
+      <text x="246" y="554" text-anchor="middle" font-size="11" font-weight="600" fill="var(--oracle)" font-family="sans-serif">pre_trade</text>
+      <text x="246" y="568" text-anchor="middle" font-size="10" fill="var(--oracle)" font-family="sans-serif">Order book depth</text>
+      <!-- post_trade -->
+      <rect x="322" y="538" width="120" height="38" rx="6" fill="var(--oracle-bg)" stroke="var(--oracle)" stroke-width="1"/>
+      <text x="382" y="554" text-anchor="middle" font-size="11" font-weight="600" fill="var(--oracle)" font-family="sans-serif">post_trade</text>
+      <text x="382" y="568" text-anchor="middle" font-size="10" fill="var(--oracle)" font-family="sans-serif">Executed trades</text>
+      <!-- indicator_results -->
+      <rect x="458" y="538" width="140" height="38" rx="6" fill="var(--oracle-bg)" stroke="var(--oracle)" stroke-width="1"/>
+      <text x="528" y="554" text-anchor="middle" font-size="11" font-weight="600" fill="var(--oracle)" font-family="sans-serif">indicator_results</text>
+      <text x="528" y="568" text-anchor="middle" font-size="10" fill="var(--oracle)" font-family="sans-serif">SMA/EMA/RSI/BB</text>
+
+      <!-- arrows from OracleBatchWriter to tables -->
+      <line x1="200" y1="500" x2="105" y2="536" stroke="var(--oracle)" stroke-width="1" marker-end="url(#arr)"/>
+      <line x1="260" y1="500" x2="246" y2="536" stroke="var(--oracle)" stroke-width="1" marker-end="url(#arr)"/>
+      <line x1="360" y1="500" x2="382" y2="536" stroke="var(--oracle)" stroke-width="1" marker-end="url(#arr)"/>
+      <line x1="430" y1="500" x2="528" y2="536" stroke="var(--oracle)" stroke-width="1" marker-end="url(#arr)"/>
+
+      <!-- FAME store -->
+      <rect x="615" y="538" width="150" height="38" rx="6" fill="var(--fame-bg)" stroke="var(--fame)" stroke-width="1" stroke-dasharray="5 3"/>
+      <text x="690" y="554" text-anchor="middle" font-size="11" font-weight="600" fill="var(--fame)" font-family="sans-serif">FameServiceClient</text>
+      <text x="690" y="568" text-anchor="middle" font-size="10" fill="var(--fame)" font-family="sans-serif">stub · app.store.backend=fame</text>
+      <line x1="500" y1="500" x2="650" y2="536" stroke="var(--fame)" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+
+      <!-- ── ROW 7: Service layer reads ── -->
+      <line x1="310" y1="576" x2="310" y2="610" stroke="var(--spring)" stroke-width="1.5" marker-end="url(#arr)"/>
+
+      <rect x="40" y="610" width="200" height="44" rx="8" fill="var(--spring-bg)" stroke="var(--spring)" stroke-width="1.5"/>
+      <text x="140" y="627" text-anchor="middle" font-size="12" font-weight="600" fill="var(--spring)" font-family="sans-serif">HistoryQueryService</text>
+      <text x="140" y="642" text-anchor="middle" font-size="10" fill="var(--spring)" font-family="sans-serif">additionalData CLOB fallback</text>
+
+      <rect x="260" y="610" width="200" height="44" rx="8" fill="var(--spring-bg)" stroke="var(--spring)" stroke-width="1.5"/>
+      <text x="360" y="627" text-anchor="middle" font-size="12" font-weight="600" fill="var(--spring)" font-family="sans-serif">ChartDataService</text>
+      <text x="360" y="642" text-anchor="middle" font-size="10" fill="var(--spring)" font-family="sans-serif">OHLCV aggregation</text>
+
+      <rect x="480" y="610" width="200" height="44" rx="8" fill="var(--spring-bg)" stroke="var(--spring)" stroke-width="1.5"/>
+      <text x="580" y="627" text-anchor="middle" font-size="12" font-weight="600" fill="var(--spring)" font-family="sans-serif">IndicatorExecutionService</text>
+      <text x="580" y="642" text-anchor="middle" font-size="10" fill="var(--spring)" font-family="sans-serif">IndicatorScriptEngine 4GL</text>
+
+      <!-- read arrows from db to services -->
+      <line x1="140" y1="576" x2="140" y2="608" stroke="var(--oracle)" stroke-width="1" stroke-dasharray="3 2" marker-end="url(#arr)"/>
+      <line x1="360" y1="576" x2="360" y2="608" stroke="var(--oracle)" stroke-width="1" stroke-dasharray="3 2" marker-end="url(#arr)"/>
+      <line x1="528" y1="576" x2="580" y2="608" stroke="var(--oracle)" stroke-width="1" stroke-dasharray="3 2" marker-end="url(#arr)"/>
+
+      <!-- ── ROW 8: REST Controllers ── -->
+      <line x1="140" y1="654" x2="140" y2="686" stroke="var(--spring)" stroke-width="1.5" marker-end="url(#arr)"/>
+      <line x1="360" y1="654" x2="360" y2="686" stroke="var(--spring)" stroke-width="1.5" marker-end="url(#arr)"/>
+      <line x1="580" y1="654" x2="580" y2="686" stroke="var(--spring)" stroke-width="1.5" marker-end="url(#arr)"/>
+
+      <rect x="40" y="686" width="180" height="38" rx="6" fill="var(--spring-bg)" stroke="var(--spring)" stroke-width="1"/>
+      <text x="130" y="702" text-anchor="middle" font-size="11" font-weight="600" fill="var(--spring)" font-family="sans-serif">HistoryController</text>
+      <text x="130" y="716" text-anchor="middle" font-size="10" fill="var(--spring)" font-family="sans-serif">GET /api/history/records</text>
+
+      <rect x="240" y="686" width="180" height="38" rx="6" fill="var(--spring-bg)" stroke="var(--spring)" stroke-width="1"/>
+      <text x="330" y="702" text-anchor="middle" font-size="11" font-weight="600" fill="var(--spring)" font-family="sans-serif">ChartDataController</text>
+      <text x="330" y="716" text-anchor="middle" font-size="10" fill="var(--spring)" font-family="sans-serif">GET /api/chart/data</text>
+
+      <rect x="440" y="686" width="180" height="38" rx="6" fill="var(--spring-bg)" stroke="var(--spring)" stroke-width="1"/>
+      <text x="530" y="702" text-anchor="middle" font-size="11" font-weight="600" fill="var(--spring)" font-family="sans-serif">IndicatorController</text>
+      <text x="530" y="716" text-anchor="middle" font-size="10" fill="var(--spring)" font-family="sans-serif">POST /api/indicators/execute</text>
+
+      <rect x="640" y="686" width="180" height="38" rx="6" fill="var(--spring-bg)" stroke="var(--spring)" stroke-width="1"/>
+      <text x="730" y="702" text-anchor="middle" font-size="11" font-weight="600" fill="var(--spring)" font-family="sans-serif">PolicyController</text>
+      <text x="730" y="716" text-anchor="middle" font-size="10" fill="var(--spring)" font-family="sans-serif">DRAFT→ACTIVE lifecycle</text>
+
+      <!-- ── ROW 9: Angular Frontend ── -->
+      <line x1="130" y1="724" x2="130" y2="754" stroke="var(--angular)" stroke-width="1.5" marker-end="url(#arr)"/>
+      <line x1="330" y1="724" x2="330" y2="754" stroke="var(--angular)" stroke-width="1.5" marker-end="url(#arr)"/>
+      <line x1="530" y1="724" x2="530" y2="754" stroke="var(--angular)" stroke-width="1.5" marker-end="url(#arr)"/>
+      <line x1="730" y1="724" x2="730" y2="754" stroke="var(--angular)" stroke-width="1.5" marker-end="url(#arr)"/>
+
+      <rect x="40" y="754" width="840" height="52" rx="8" fill="var(--angular-bg)" stroke="var(--angular)" stroke-width="1.5"/>
+      <text x="460" y="774" text-anchor="middle" font-size="13" font-weight="700" fill="var(--angular)" font-family="sans-serif">Angular 21 Frontend</text>
+      <text x="460" y="791" text-anchor="middle" font-size="10" fill="var(--angular)" font-family="sans-serif">HistoryViewer · ChartViewer · IndicatorBuilder · PolicyManager · TopicAdmin · UserAdmin · WebSocket live feed</text>
+
+    </svg>
+  </div>
+</div>
+
+<!-- TAB 2: Entities -->
+<div id="tab-entities" class="view">
+  <div class="legend">
+    <span class="legend-item"><span class="legend-dot" style="background:var(--oracle)"></span>Data entities</span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--kafka)"></span>Kafka/config entities</span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--spring)"></span>Domain entities</span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--fame)"></span>User/access entities</span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--angular)"></span>Chart/workspace entities</span>
+  </div>
+  <div class="diagram-wrap">
+    <svg width="100%" viewBox="0 0 1100 740" role="img">
+      <title>Entity relationship diagram for FX Transaction Processor</title>
+      <desc>Shows all Oracle entities and their primary key / foreign key relationships</desc>
+      <defs>
+        <marker id="arr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+
+      <!-- DATA TABLES row -->
+      <text x="30" y="22" font-size="11" font-weight="600" fill="var(--text3)" font-family="sans-serif">DATA FEED TABLES</text>
+      <!-- market_data -->
+      <rect x="20" y="30" width="200" height="130" rx="8" fill="var(--oracle-bg)" stroke="var(--oracle)" stroke-width="1.5"/>
+      <text x="120" y="48" text-anchor="middle" font-size="13" font-weight="700" fill="var(--oracle)" font-family="sans-serif">market_data</text>
+      <text x="30" y="64" font-size="10" fill="var(--text)" font-family="sans-serif">PK  id (BIGINT AI)</text>
+      <text x="30" y="80" font-size="10" fill="var(--text)" font-family="sans-serif">    currencyPair, timestamp</text>
+      <text x="30" y="94" font-size="10" fill="var(--text)" font-family="sans-serif">    open/high/low/close, volume</text>
+      <text x="30" y="108" font-size="10" fill="var(--text)" font-family="sans-serif">    bid/ask/mid, spread stats</text>
+      <text x="30" y="122" font-size="10" fill="var(--text)" font-family="sans-serif">    deduplicationKey, source</text>
+      <text x="30" y="140" font-size="10" fill="var(--oracle)" font-family="sans-serif">    additionalData CLOB</text>
+
+      <!-- pre_trade -->
+      <rect x="240" y="30" width="200" height="130" rx="8" fill="var(--oracle-bg)" stroke="var(--oracle)" stroke-width="1.5"/>
+      <text x="340" y="48" text-anchor="middle" font-size="13" font-weight="700" fill="var(--oracle)" font-family="sans-serif">pre_trade</text>
+      <text x="250" y="64" font-size="10" fill="var(--text)" font-family="sans-serif">PK  id</text>
+      <text x="250" y="80" font-size="10" fill="var(--text)" font-family="sans-serif">    currencyPair, timestamp</text>
+      <text x="250" y="94" font-size="10" fill="var(--text)" font-family="sans-serif">    bid/ask/mid, volume</text>
+      <text x="250" y="108" font-size="10" fill="var(--text)" font-family="sans-serif">    bestBid/bestAsk, spread</text>
+      <text x="250" y="122" font-size="10" fill="var(--text)" font-family="sans-serif">    bidDepth CLOB</text>
+      <text x="250" y="140" font-size="10" fill="var(--oracle)" font-family="sans-serif">    additionalData CLOB</text>
+
+      <!-- post_trade -->
+      <rect x="460" y="30" width="210" height="130" rx="8" fill="var(--oracle-bg)" stroke="var(--oracle)" stroke-width="1.5"/>
+      <text x="565" y="48" text-anchor="middle" font-size="13" font-weight="700" fill="var(--oracle)" font-family="sans-serif">post_trade</text>
+      <text x="470" y="64" font-size="10" fill="var(--text)" font-family="sans-serif">PK  id</text>
+      <text x="470" y="80" font-size="10" fill="var(--text)" font-family="sans-serif">    tradeId, currencyPair</text>
+      <text x="470" y="94" font-size="10" fill="var(--text)" font-family="sans-serif">    tradePrice, aggressorSide</text>
+      <text x="470" y="108" font-size="10" fill="var(--text)" font-family="sans-serif">    notional, settlementDate</text>
+      <text x="470" y="122" font-size="10" fill="var(--text)" font-family="sans-serif">    LEI fields, clearing</text>
+      <text x="470" y="140" font-size="10" fill="var(--oracle)" font-family="sans-serif">    additionalData CLOB</text>
+
+      <!-- indicator_results -->
+      <rect x="690" y="30" width="210" height="130" rx="8" fill="var(--oracle-bg)" stroke="var(--oracle)" stroke-width="1.5"/>
+      <text x="795" y="48" text-anchor="middle" font-size="13" font-weight="700" fill="var(--oracle)" font-family="sans-serif">indicator_results</text>
+      <text x="700" y="64" font-size="10" fill="var(--text)" font-family="sans-serif">PK  id</text>
+      <text x="700" y="80" font-size="10" fill="var(--text)" font-family="sans-serif">    indicatorId, name</text>
+      <text x="700" y="94" font-size="10" fill="var(--text)" font-family="sans-serif">    currencyPairs, sourceTable</text>
+      <text x="700" y="108" font-size="10" fill="var(--text)" font-family="sans-serif">    valueMain/Signal/Upper</text>
+      <text x="700" y="122" font-size="10" fill="var(--text)" font-family="sans-serif">    valueLower/Histogram</text>
+      <text x="700" y="140" font-size="10" fill="var(--text)" font-family="sans-serif">    calculatedAt</text>
+
+      <!-- DOMAIN ENTITIES row -->
+      <text x="30" y="186" font-size="11" font-weight="600" fill="var(--text3)" font-family="sans-serif">DOMAIN</text>
+      <!-- users -->
+      <rect x="20" y="194" width="180" height="130" rx="8" fill="var(--fame-bg)" stroke="var(--fame)" stroke-width="1.5"/>
+      <text x="110" y="212" text-anchor="middle" font-size="13" font-weight="700" fill="var(--fame)" font-family="sans-serif">users</text>
+      <text x="30" y="228" font-size="10" fill="var(--text)" font-family="sans-serif">PK  userId</text>
+      <text x="30" y="244" font-size="10" fill="var(--text)" font-family="sans-serif">    username, email</text>
+      <text x="30" y="260" font-size="10" fill="var(--text)" font-family="sans-serif">    fullName, passwordHash</text>
+      <text x="30" y="276" font-size="10" fill="var(--text)" font-family="sans-serif">    role, department</text>
+      <text x="30" y="292" font-size="10" fill="var(--text)" font-family="sans-serif">    isAdmin, isActive</text>
+      <text x="30" y="308" font-size="10" fill="var(--text)" font-family="sans-serif">    createdAt</text>
+
+      <!-- policies -->
+      <rect x="220" y="194" width="200" height="150" rx="8" fill="var(--spring-bg)" stroke="var(--spring)" stroke-width="1.5"/>
+      <text x="320" y="212" text-anchor="middle" font-size="13" font-weight="700" fill="var(--spring)" font-family="sans-serif">policies</text>
+      <text x="230" y="228" font-size="10" fill="var(--text)" font-family="sans-serif">PK  id</text>
+      <text x="230" y="244" font-size="10" fill="var(--text)" font-family="sans-serif">    name, description</text>
+      <text x="230" y="260" font-size="10" fill="var(--text)" font-family="sans-serif">    status (DRAFT→ACTIVE)</text>
+      <text x="230" y="276" font-size="10" fill="var(--text)" font-family="sans-serif">    category, severity</text>
+      <text x="230" y="292" font-size="10" fill="var(--text)" font-family="sans-serif">    applicablePairs</text>
+      <text x="230" y="308" font-size="10" fill="var(--text)" font-family="sans-serif">    createdBy, approvedBy</text>
+      <text x="230" y="324" font-size="10" fill="var(--text)" font-family="sans-serif">    autoEscalate</text>
+
+      <!-- policy_rules -->
+      <rect x="440" y="194" width="180" height="110" rx="8" fill="var(--spring-bg)" stroke="var(--spring)" stroke-width="1.5"/>
+      <text x="530" y="212" text-anchor="middle" font-size="12" font-weight="700" fill="var(--spring)" font-family="sans-serif">policy_rules</text>
+      <text x="450" y="228" font-size="10" fill="var(--text)" font-family="sans-serif">PK  id</text>
+      <text x="450" y="244" font-size="10" fill="var(--text)" font-family="sans-serif">FK  policyId → policies</text>
+      <text x="450" y="260" font-size="10" fill="var(--text)" font-family="sans-serif">    fieldName, operator</text>
+      <text x="450" y="276" font-size="10" fill="var(--text)" font-family="sans-serif">    threshold, alertType</text>
+      <text x="450" y="292" font-size="10" fill="var(--text)" font-family="sans-serif">    isActive</text>
+
+      <!-- policy_breaches -->
+      <rect x="440" y="316" width="180" height="100" rx="8" fill="var(--spring-bg)" stroke="var(--spring)" stroke-width="1.5"/>
+      <text x="530" y="334" text-anchor="middle" font-size="12" font-weight="700" fill="var(--spring)" font-family="sans-serif">policy_breaches</text>
+      <text x="450" y="350" font-size="10" fill="var(--text)" font-family="sans-serif">PK  id</text>
+      <text x="450" y="366" font-size="10" fill="var(--text)" font-family="sans-serif">FK  policyId, ruleId</text>
+      <text x="450" y="382" font-size="10" fill="var(--text)" font-family="sans-serif">    currencyPair, value</text>
+      <text x="450" y="398" font-size="10" fill="var(--text)" font-family="sans-serif">    severity, timestamp</text>
+
+      <!-- indicators -->
+      <rect x="640" y="194" width="200" height="130" rx="8" fill="var(--spring-bg)" stroke="var(--spring)" stroke-width="1.5"/>
+      <text x="740" y="212" text-anchor="middle" font-size="13" font-weight="700" fill="var(--spring)" font-family="sans-serif">indicators</text>
+      <text x="650" y="228" font-size="10" fill="var(--text)" font-family="sans-serif">PK  id</text>
+      <text x="650" y="244" font-size="10" fill="var(--text)" font-family="sans-serif">    name, type (OVERLAY/OSC)</text>
+      <text x="650" y="260" font-size="10" fill="var(--text)" font-family="sans-serif">    script CLOB</text>
+      <text x="650" y="276" font-size="10" fill="var(--text)" font-family="sans-serif">    isPublic, createdBy</text>
+      <text x="650" y="292" font-size="10" fill="var(--text)" font-family="sans-serif">    usageCount, favoriteCount</text>
+      <text x="650" y="308" font-size="10" fill="var(--text)" font-family="sans-serif">    createdAt, updatedAt</text>
+
+      <!-- indicator_permissions -->
+      <rect x="860" y="194" width="200" height="90" rx="8" fill="var(--spring-bg)" stroke="var(--spring)" stroke-width="1.5"/>
+      <text x="960" y="212" text-anchor="middle" font-size="12" font-weight="700" fill="var(--spring)" font-family="sans-serif">indicator_permissions</text>
+      <text x="870" y="228" font-size="10" fill="var(--text)" font-family="sans-serif">PK  id</text>
+      <text x="870" y="244" font-size="10" fill="var(--text)" font-family="sans-serif">FK  indicatorId → indicators</text>
+      <text x="870" y="260" font-size="10" fill="var(--text)" font-family="sans-serif">    userId, permissionType</text>
+      <text x="870" y="276" font-size="10" fill="var(--text)" font-family="sans-serif">    grantedAt</text>
+
+      <!-- KAFKA / CONFIG row -->
+      <text x="30" y="440" font-size="11" font-weight="600" fill="var(--text3)" font-family="sans-serif">KAFKA / CONFIG</text>
+      <rect x="20" y="448" width="220" height="120" rx="8" fill="var(--kafka-bg)" stroke="var(--kafka)" stroke-width="1.5"/>
+      <text x="130" y="466" text-anchor="middle" font-size="12" font-weight="700" fill="var(--kafka)" font-family="sans-serif">topic_configurations</text>
+      <text x="30" y="482" font-size="10" fill="var(--text)" font-family="sans-serif">PK  id · topicName</text>
+      <text x="30" y="498" font-size="10" fill="var(--text)" font-family="sans-serif">    bootstrapServers, groupId</text>
+      <text x="30" y="514" font-size="10" fill="var(--text)" font-family="sans-serif">    securityProtocol=SASL_SSL</text>
+      <text x="30" y="530" font-size="10" fill="var(--text)" font-family="sans-serif">    sslProtocol=TLSv1.3</text>
+      <text x="30" y="546" font-size="10" fill="var(--text)" font-family="sans-serif">    dedup settings</text>
+      <text x="30" y="560" font-size="10" fill="var(--text)" font-family="sans-serif">    saslJaasConfig CLOB</text>
+
+      <!-- attribute_mappings -->
+      <rect x="260" y="448" width="200" height="120" rx="8" fill="var(--kafka-bg)" stroke="var(--kafka)" stroke-width="1.5"/>
+      <text x="360" y="466" text-anchor="middle" font-size="12" font-weight="700" fill="var(--kafka)" font-family="sans-serif">attribute_mappings</text>
+      <text x="270" y="482" font-size="10" fill="var(--text)" font-family="sans-serif">PK  id</text>
+      <text x="270" y="498" font-size="10" fill="var(--text)" font-family="sans-serif">    topicName, fieldName</text>
+      <text x="270" y="514" font-size="10" fill="var(--text)" font-family="sans-serif">    canonicalName, dataType</text>
+      <text x="270" y="530" font-size="10" fill="var(--text)" font-family="sans-serif">    discoveredFrom (V16)</text>
+      <text x="270" y="546" font-size="10" fill="var(--text)" font-family="sans-serif">    sampleValue (V16)</text>
+      <text x="270" y="560" font-size="10" fill="var(--text)" font-family="sans-serif">    lastSeenAt (V16)</text>
+
+      <!-- ACCESS GRANTS row -->
+      <text x="490" y="440" font-size="11" font-weight="600" fill="var(--text3)" font-family="sans-serif">ACCESS GRANTS (V17)</text>
+      <rect x="490" y="448" width="190" height="120" rx="8" fill="var(--fame-bg)" stroke="var(--fame)" stroke-width="1.5"/>
+      <text x="585" y="466" text-anchor="middle" font-size="12" font-weight="700" fill="var(--fame)" font-family="sans-serif">user_pair_grants</text>
+      <text x="500" y="482" font-size="10" fill="var(--text)" font-family="sans-serif">PK  id</text>
+      <text x="500" y="498" font-size="10" fill="var(--text)" font-family="sans-serif">FK  userId → users</text>
+      <text x="500" y="514" font-size="10" fill="var(--text)" font-family="sans-serif">    grantLevel (TYPE|SOURCE|PAIR)</text>
+      <text x="500" y="530" font-size="10" fill="var(--text)" font-family="sans-serif">    dataType, source, pair</text>
+      <text x="500" y="546" font-size="10" fill="var(--text)" font-family="sans-serif">    grantedBy, grantedAt</text>
+
+      <rect x="700" y="448" width="190" height="110" rx="8" fill="var(--fame-bg)" stroke="var(--fame)" stroke-width="1.5"/>
+      <text x="795" y="466" text-anchor="middle" font-size="12" font-weight="700" fill="var(--fame)" font-family="sans-serif">user_attribute_grants</text>
+      <text x="710" y="482" font-size="10" fill="var(--text)" font-family="sans-serif">PK  id</text>
+      <text x="710" y="498" font-size="10" fill="var(--text)" font-family="sans-serif">FK  userId → users</text>
+      <text x="710" y="514" font-size="10" fill="var(--text)" font-family="sans-serif">    topicName, fieldName</text>
+      <text x="710" y="530" font-size="10" fill="var(--text)" font-family="sans-serif">    grantedBy, grantedAt</text>
+
+      <rect x="910" y="448" width="170" height="90" rx="8" fill="var(--fame-bg)" stroke="var(--fame)" stroke-width="1.5"/>
+      <text x="995" y="466" text-anchor="middle" font-size="12" font-weight="700" fill="var(--fame)" font-family="sans-serif">user_pair_catalog</text>
+      <text x="920" y="482" font-size="10" fill="var(--text)" font-family="sans-serif">PK  id</text>
+      <text x="920" y="498" font-size="10" fill="var(--text)" font-family="sans-serif">    topicName, dataType</text>
+      <text x="920" y="514" font-size="10" fill="var(--text)" font-family="sans-serif">    source, pair</text>
+      <text x="920" y="530" font-size="10" fill="var(--text)" font-family="sans-serif">    firstSeen, lastSeen</text>
+
+      <!-- CHART row -->
+      <text x="30" y="600" font-size="11" font-weight="600" fill="var(--text3)" font-family="sans-serif">CHART / WORKSPACE</text>
+      <rect x="20" y="608" width="200" height="90" rx="8" fill="var(--angular-bg)" stroke="var(--angular)" stroke-width="1.5"/>
+      <text x="120" y="626" text-anchor="middle" font-size="12" font-weight="700" fill="var(--angular)" font-family="sans-serif">chart_workspaces</text>
+      <text x="30" y="642" font-size="10" fill="var(--text)" font-family="sans-serif">PK  id · userId</text>
+      <text x="30" y="658" font-size="10" fill="var(--text)" font-family="sans-serif">    name, layout JSON</text>
+      <text x="30" y="674" font-size="10" fill="var(--text)" font-family="sans-serif">    isDefault</text>
+
+      <rect x="240" y="608" width="200" height="100" rx="8" fill="var(--angular-bg)" stroke="var(--angular)" stroke-width="1.5"/>
+      <text x="340" y="626" text-anchor="middle" font-size="12" font-weight="700" fill="var(--angular)" font-family="sans-serif">chart_comments</text>
+      <text x="250" y="642" font-size="10" fill="var(--text)" font-family="sans-serif">PK  id · workspaceId</text>
+      <text x="250" y="658" font-size="10" fill="var(--text)" font-family="sans-serif">    text, authorId</text>
+      <text x="250" y="674" font-size="10" fill="var(--text)" font-family="sans-serif">    fameStatus (V15)</text>
+      <text x="250" y="690" font-size="10" fill="var(--angular)" font-family="sans-serif">    fameSentAt, fameError</text>
+
+      <!-- FK relationship lines -->
+      <!-- policies → policy_rules -->
+      <line x1="420" y1="260" x2="438" y2="250" stroke="var(--spring)" stroke-width="1" stroke-dasharray="4 2" marker-end="url(#arr2)"/>
+      <!-- policies → policy_breaches -->
+      <line x1="420" y1="300" x2="438" y2="360" stroke="var(--spring)" stroke-width="1" stroke-dasharray="4 2" marker-end="url(#arr2)"/>
+      <!-- indicators → indicator_results -->
+      <line x1="740" y1="160" x2="795" y2="30" stroke="var(--oracle)" stroke-width="1" stroke-dasharray="4 2" marker-end="url(#arr2)"/>
+      <!-- indicators → indicator_permissions -->
+      <line x1="840" y1="260" x2="858" y2="260" stroke="var(--spring)" stroke-width="1" stroke-dasharray="4 2" marker-end="url(#arr2)"/>
+      <!-- users → user_pair_grants -->
+      <line x1="200" y1="290" x2="488" y2="510" stroke="var(--fame)" stroke-width="1" stroke-dasharray="4 2" marker-end="url(#arr2)"/>
+      <!-- users → user_attribute_grants -->
+      <line x1="200" y1="300" x2="698" y2="510" stroke="var(--fame)" stroke-width="1" stroke-dasharray="4 2" marker-end="url(#arr2)"/>
+    </svg>
+  </div>
+</div>
+
+<!-- TAB 3: Services -->
+<div id="tab-services" class="view">
+  <div class="diagram-wrap">
+    <svg width="100%" viewBox="0 0 1100 680" role="img">
+      <title>Service layer dependency diagram</title>
+      <desc>Shows service dependencies and interactions in the FX Processor backend</desc>
+      <defs>
+        <marker id="arr3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+
+      <!-- KAFKA layer -->
+      <rect x="20" y="10" width="1060" height="70" rx="10" fill="var(--kafka-bg)" stroke="var(--kafka)" stroke-width="1" stroke-dasharray="6 3"/>
+      <text x="550" y="30" text-anchor="middle" font-size="11" font-weight="600" fill="var(--kafka)" font-family="sans-serif">KAFKA CONSUMER LAYER</text>
+      <rect x="40" y="38" width="220" height="32" rx="6" fill="var(--kafka-bg)" stroke="var(--kafka)" stroke-width="1.5"/>
+      <text x="150" y="58" text-anchor="middle" font-size="12" font-weight="600" fill="var(--kafka)" font-family="sans-serif">DynamicKafkaConsumerService</text>
+      <rect x="290" y="38" width="160" height="32" rx="6" fill="var(--kafka-bg)" stroke="var(--kafka)" stroke-width="1.5"/>
+      <text x="370" y="58" text-anchor="middle" font-size="12" font-weight="600" fill="var(--kafka)" font-family="sans-serif">KafkaConfig</text>
+      <rect x="480" y="38" width="200" height="32" rx="6" fill="var(--kafka-bg)" stroke="var(--kafka)" stroke-width="1.5"/>
+      <text x="580" y="58" text-anchor="middle" font-size="12" font-weight="600" fill="var(--kafka)" font-family="sans-serif">EventOrchestrationService</text>
+      <rect x="710" y="38" width="200" height="32" rx="6" fill="var(--kafka-bg)" stroke="var(--kafka)" stroke-width="1.5"/>
+      <text x="810" y="58" text-anchor="middle" font-size="12" font-weight="600" fill="var(--kafka)" font-family="sans-serif">NodeDefinitionService</text>
+
+      <!-- PROCESSING layer -->
+      <line x1="150" y1="80" x2="150" y2="114" stroke="var(--kafka)" stroke-width="1.5" marker-end="url(#arr3)"/>
+      <rect x="20" y="104" width="1060" height="130" rx="10" fill="var(--spring-bg)" stroke="var(--spring)" stroke-width="1" stroke-dasharray="6 3"/>
+      <text x="550" y="122" text-anchor="middle" font-size="11" font-weight="600" fill="var(--spring)" font-family="sans-serif">PROCESSING LAYER</text>
+      <!-- row of processing services -->
+      <rect x="30" y="130" width="175" height="44" rx="6" fill="var(--spring-bg)" stroke="var(--spring)" stroke-width="1.5"/>
+      <text x="118" y="148" text-anchor="middle" font-size="11" font-weight="600" fill="var(--spring)" font-family="sans-serif">DeduplicationService</text>
+      <text x="118" y="164" text-anchor="middle" font-size="10" fill="var(--spring)" font-family="sans-serif">Redis window · key config</text>
+
+      <rect x="225" y="130" width="175" height="44" rx="6" fill="var(--spring-bg)" stroke="var(--spring)" stroke-width="1.5"/>
+      <text x="313" y="148" text-anchor="middle" font-size="11" font-weight="600" fill="var(--spring)" font-family="sans-serif">ValidationEngineService</text>
+      <text x="313" y="164" text-anchor="middle" font-size="10" fill="var(--spring)" font-family="sans-serif">ValidationRule evaluation</text>
+
+      <rect x="420" y="130" width="175" height="44" rx="6" fill="var(--spring-bg)" stroke="var(--spring)" stroke-width="1.5"/>
+      <text x="508" y="148" text-anchor="middle" font-size="11" font-weight="600" fill="var(--spring)" font-family="sans-serif">RuleEngineService</text>
+      <text x="508" y="164" text-anchor="middle" font-size="10" fill="var(--spring)" font-family="sans-serif">Policy rules eval</text>
+
+      <rect x="615" y="130" width="175" height="44" rx="6" fill="var(--spring-bg)" stroke="var(--spring)" stroke-width="1.5"/>
+      <text x="703" y="148" text-anchor="middle" font-size="11" font-weight="600" fill="var(--spring)" font-family="sans-serif">PolicyEngineService</text>
+      <text x="703" y="164" text-anchor="middle" font-size="10" fill="var(--spring)" font-family="sans-serif">Breach detection</text>
+
+      <rect x="810" y="130" width="200" height="44" rx="6" fill="var(--spring-bg)" stroke="var(--spring)" stroke-width="1.5"/>
+      <text x="910" y="148" text-anchor="middle" font-size="11" font-weight="600" fill="var(--spring)" font-family="sans-serif">AttributeDiscoveryService</text>
+      <text x="910" y="164" text-anchor="middle" font-size="10" fill="var(--spring)" font-family="sans-serif">Auto-maps fields to DB</text>
+
+      <!-- second processing row -->
+      <rect x="30" y="184" width="175" height="44" rx="6" fill="var(--spring-bg)" stroke="var(--spring)" stroke-width="1.5"/>
+      <text x="118" y="202" text-anchor="middle" font-size="11" font-weight="600" fill="var(--spring)" font-family="sans-serif">OracleBatchWriterService</text>
+      <text x="118" y="218" text-anchor="middle" font-size="10" fill="var(--spring)" font-family="sans-serif">Batched writes + dead-letter</text>
+
+      <rect x="225" y="184" width="175" height="44" rx="6" fill="var(--spring-bg)" stroke="var(--spring)" stroke-width="1.5"/>
+      <text x="313" y="202" text-anchor="middle" font-size="11" font-weight="600" fill="var(--spring)" font-family="sans-serif">PolicyBreachService</text>
+      <text x="313" y="218" text-anchor="middle" font-size="10" fill="var(--spring)" font-family="sans-serif">Persist + notify breaches</text>
+
+      <rect x="420" y="184" width="175" height="44" rx="6" fill="var(--spring-bg)" stroke="var(--spring)" stroke-width="1.5"/>
+      <text x="508" y="202" text-anchor="middle" font-size="11" font-weight="600" fill="var(--spring)" font-family="sans-serif">PromotionService</text>
+      <text x="508" y="218" text-anchor="middle" font-size="10" fill="var(--spring)" font-family="sans-serif">Policy DRAFT→ACTIVE flow</text>
+
+      <rect x="615" y="184" width="175" height="44" rx="6" fill="var(--spring-bg)" stroke="var(--spring)" stroke-width="1.5"/>
+      <text x="703" y="202" text-anchor="middle" font-size="11" font-weight="600" fill="var(--spring)" font-family="sans-serif">AuditLogService</text>
+      <text x="703" y="218" text-anchor="middle" font-size="10" fill="var(--spring)" font-family="sans-serif">All user actions tracked</text>
+
+      <rect x="810" y="184" width="200" height="44" rx="6" fill="var(--spring-bg)" stroke="var(--spring)" stroke-width="1.5"/>
+      <text x="910" y="202" text-anchor="middle" font-size="11" font-weight="600" fill="var(--spring)" font-family="sans-serif">MetricsService</text>
+      <text x="910" y="218" text-anchor="middle" font-size="10" fill="var(--spring)" font-family="sans-serif">PipelineMetricsService</text>
+
+      <!-- QUERY layer -->
+      <line x1="550" y1="234" x2="550" y2="264" stroke="var(--spring)" stroke-width="1.5" marker-end="url(#arr3)"/>
+      <rect x="20" y="254" width="1060" height="130" rx="10" fill="var(--accent-bg)" stroke="var(--accent)" stroke-width="1" stroke-dasharray="6 3"/>
+      <text x="550" y="272" text-anchor="middle" font-size="11" font-weight="600" fill="var(--accent)" font-family="sans-serif">QUERY / INDICATOR LAYER</text>
+
+      <rect x="30" y="280" width="185" height="44" rx="6" fill="var(--accent-bg)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text x="123" y="298" text-anchor="middle" font-size="11" font-weight="600" fill="var(--accent)" font-family="sans-serif">HistoryQueryService</text>
+      <text x="123" y="314" text-anchor="middle" font-size="10" fill="var(--accent)" font-family="sans-serif">additionalData fallback</text>
+
+      <rect x="230" y="280" width="185" height="44" rx="6" fill="var(--accent-bg)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text x="323" y="298" text-anchor="middle" font-size="11" font-weight="600" fill="var(--accent)" font-family="sans-serif">ChartDataService</text>
+      <text x="323" y="314" text-anchor="middle" font-size="10" fill="var(--accent)" font-family="sans-serif">OHLCV aggregation</text>
+
+      <rect x="430" y="280" width="185" height="44" rx="6" fill="var(--accent-bg)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text x="523" y="298" text-anchor="middle" font-size="11" font-weight="600" fill="var(--accent)" font-family="sans-serif">IndicatorExecutionService</text>
+      <text x="523" y="314" text-anchor="middle" font-size="10" fill="var(--accent)" font-family="sans-serif">Runs IndicatorScriptEngine</text>
+
+      <rect x="630" y="280" width="185" height="44" rx="6" fill="var(--accent-bg)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text x="723" y="298" text-anchor="middle" font-size="11" font-weight="600" fill="var(--accent)" font-family="sans-serif">IndicatorScriptEngine</text>
+      <text x="723" y="314" text-anchor="middle" font-size="10" fill="var(--accent)" font-family="sans-serif">SMA/EMA/RSI/BB 4GL</text>
+
+      <rect x="830" y="280" width="175" height="44" rx="6" fill="var(--accent-bg)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text x="918" y="298" text-anchor="middle" font-size="11" font-weight="600" fill="var(--accent)" font-family="sans-serif">UserDataAccessService</text>
+      <text x="918" y="314" text-anchor="middle" font-size="10" fill="var(--accent)" font-family="sans-serif">Pair/attribute grants</text>
+
+      <!-- second query row -->
+      <rect x="30" y="334" width="185" height="44" rx="6" fill="var(--accent-bg)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text x="123" y="352" text-anchor="middle" font-size="11" font-weight="600" fill="var(--accent)" font-family="sans-serif">PolicyService</text>
+      <text x="123" y="368" text-anchor="middle" font-size="10" fill="var(--accent)" font-family="sans-serif">CRUD + lifecycle</text>
+
+      <rect x="230" y="334" width="185" height="44" rx="6" fill="var(--accent-bg)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text x="323" y="352" text-anchor="middle" font-size="11" font-weight="600" fill="var(--accent)" font-family="sans-serif">IndicatorService</text>
+      <text x="323" y="368" text-anchor="middle" font-size="10" fill="var(--accent)" font-family="sans-serif">CRUD + favorites</text>
+
+      <rect x="430" y="334" width="185" height="44" rx="6" fill="var(--accent-bg)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text x="523" y="352" text-anchor="middle" font-size="11" font-weight="600" fill="var(--accent)" font-family="sans-serif">ChartCommentService</text>
+      <text x="523" y="368" text-anchor="middle" font-size="10" fill="var(--accent)" font-family="sans-serif">FAME export tracking</text>
+
+      <rect x="630" y="334" width="185" height="44" rx="6" fill="var(--accent-bg)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text x="723" y="352" text-anchor="middle" font-size="11" font-weight="600" fill="var(--accent)" font-family="sans-serif">FameServiceClient</text>
+      <text x="723" y="368" text-anchor="middle" font-size="10" fill="var(--fame)" font-family="sans-serif">stub backend</text>
+
+      <rect x="830" y="334" width="185" height="44" rx="6" fill="var(--accent-bg)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text x="918" y="352" text-anchor="middle" font-size="11" font-weight="600" fill="var(--accent)" font-family="sans-serif">ParquetWriterService</text>
+      <text x="918" y="368" text-anchor="middle" font-size="10" fill="var(--accent)" font-family="sans-serif">EnhancedParquetWriterService</text>
+
+      <!-- CONTROLLER layer -->
+      <line x1="550" y1="384" x2="550" y2="414" stroke="var(--spring)" stroke-width="1.5" marker-end="url(#arr3)"/>
+      <rect x="20" y="404" width="1060" height="90" rx="10" fill="var(--surface2)" stroke="var(--border2)" stroke-width="1" stroke-dasharray="6 3"/>
+      <text x="550" y="422" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text2)" font-family="sans-serif">REST CONTROLLERS (25+)</text>
+      <text x="90" y="446" text-anchor="middle" font-size="10" fill="var(--text2)" font-family="sans-serif">HistoryController</text>
+      <text x="220" y="446" text-anchor="middle" font-size="10" fill="var(--text2)" font-family="sans-serif">ChartDataController</text>
+      <text x="360" y="446" text-anchor="middle" font-size="10" fill="var(--text2)" font-family="sans-serif">IndicatorController</text>
+      <text x="490" y="446" text-anchor="middle" font-size="10" fill="var(--text2)" font-family="sans-serif">PolicyController</text>
+      <text x="610" y="446" text-anchor="middle" font-size="10" fill="var(--text2)" font-family="sans-serif">UserController</text>
+      <text x="730" y="446" text-anchor="middle" font-size="10" fill="var(--text2)" font-family="sans-serif">TopicController</text>
+      <text x="850" y="446" text-anchor="middle" font-size="10" fill="var(--text2)" font-family="sans-serif">WebSocketController</text>
+      <text x="990" y="446" text-anchor="middle" font-size="10" fill="var(--text2)" font-family="sans-serif">MetricsController</text>
+      <text x="90" y="466" text-anchor="middle" font-size="10" fill="var(--text2)" font-family="sans-serif">ValidationController</text>
+      <text x="220" y="466" text-anchor="middle" font-size="10" fill="var(--text2)" font-family="sans-serif">AuditLogController</text>
+      <text x="360" y="466" text-anchor="middle" font-size="10" fill="var(--text2)" font-family="sans-serif">DeadLetterController</text>
+      <text x="490" y="466" text-anchor="middle" font-size="10" fill="var(--text2)" font-family="sans-serif">PromotionController</text>
+      <text x="610" y="466" text-anchor="middle" font-size="10" fill="var(--text2)" font-family="sans-serif">WorkspaceController</text>
+      <text x="750" y="466" text-anchor="middle" font-size="10" fill="var(--text2)" font-family="sans-serif">AttributeMappingController</text>
+
+      <!-- Angular -->
+      <line x1="550" y1="494" x2="550" y2="524" stroke="var(--angular)" stroke-width="1.5" marker-end="url(#arr3)"/>
+      <rect x="20" y="514" width="1060" height="50" rx="10" fill="var(--angular-bg)" stroke="var(--angular)" stroke-width="1.5"/>
+      <text x="550" y="534" text-anchor="middle" font-size="13" font-weight="700" fill="var(--angular)" font-family="sans-serif">Angular 21 · TypeScript 5.9 · Node 20.19.2</text>
+      <text x="550" y="552" text-anchor="middle" font-size="10" fill="var(--angular)" font-family="sans-serif">HistoryViewer · ChartViewer · PolicyManager · IndicatorBuilder · TopicAdmin · UserAdmin · Live WebSocket feed</text>
+
+      <!-- Config layer -->
+      <rect x="20" y="580" width="1060" height="50" rx="10" fill="var(--surface2)" stroke="var(--border)" stroke-width="1" stroke-dasharray="4 3"/>
+      <text x="550" y="599" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text3)" font-family="sans-serif">SPRING BOOT CONFIG</text>
+      <text x="150" y="618" text-anchor="middle" font-size="10" fill="var(--text3)" font-family="sans-serif">KafkaConfig</text>
+      <text x="300" y="618" text-anchor="middle" font-size="10" fill="var(--text3)" font-family="sans-serif">WebSocketConfig</text>
+      <text x="450" y="618" text-anchor="middle" font-size="10" fill="var(--text3)" font-family="sans-serif">StaticResourceConfig</text>
+      <text x="600" y="618" text-anchor="middle" font-size="10" fill="var(--text3)" font-family="sans-serif">DataInitializer</text>
+      <text x="750" y="618" text-anchor="middle" font-size="10" fill="var(--text3)" font-family="sans-serif">SecurityConfig</text>
+      <text x="900" y="618" text-anchor="middle" font-size="10" fill="var(--text3)" font-family="sans-serif">Flyway V1–V18</text>
+
+    </svg>
+  </div>
+</div>
+
+<!-- TAB 4: Class detail -->
+<div id="tab-classes" class="view">
+  <div class="search-row">
+    <input class="search-box" type="text" id="classSearch" placeholder="Search classes, fields…" oninput="filterClasses(this.value)"/>
+    <select class="filter-select" id="layerFilter" onchange="filterClasses(document.getElementById('classSearch').value)">
+      <option value="">All layers</option>
+      <option value="Entity">Entity</option>
+      <option value="Service">Service</option>
+      <option value="Controller">Controller</option>
+      <option value="Model">Model</option>
+    </select>
+  </div>
+  <div id="classGrid" class="class-grid"></div>
+</div>
+
+<!-- TAB 5: Relationships -->
+<div id="tab-relations" class="view">
+  <div class="search-row">
+    <input class="search-box" type="text" id="relSearch" placeholder="Search source or target…" oninput="filterRels(this.value)"/>
+    <select class="filter-select" id="relTypeFilter" onchange="filterRels(document.getElementById('relSearch').value)">
+      <option value="">All types</option>
+      <option value="One-to-Many">One-to-Many</option>
+      <option value="Many-to-One">Many-to-One</option>
+      <option value="Depends on">Depends on</option>
+      <option value="Interface">Interface</option>
+    </select>
+  </div>
+  <div class="diagram-wrap" style="padding:0">
+    <table class="rel-table" id="relTable">
+      <thead><tr>
+        <th>Source</th><th>Relationship</th><th>Target</th><th>Notes</th>
+      </tr></thead>
+      <tbody id="relBody"></tbody>
+    </table>
+    <div id="relEmpty" class="empty-state" style="display:none">No matching relationships</div>
+  </div>
+</div>
+
+<script>
+const CLASSES = [
+  {name:'MarketDataEntity', layer:'Entity', pkg:'entity', color:'oracle', fields:[
+    {v:'+',n:'id',t:'Long PK'},
+    {v:'+',n:'currencyPair',t:'String'},
+    {v:'+',n:'timestamp',t:'LocalDateTime'},
+    {v:'+',n:'open/high/low/close',t:'BigDecimal'},
+    {v:'+',n:'volume',t:'BigDecimal'},
+    {v:'+',n:'bid/ask/mid',t:'BigDecimal'},
+    {v:'+',n:'additionalData',t:'String CLOB'},
+    {v:'+',n:'rawPayload',t:'String CLOB'},
+    {v:'+',n:'source, deduplicationKey',t:'String'},
+  ]},
+  {name:'PreTradeEntity', layer:'Entity', pkg:'entity', color:'oracle', fields:[
+    {v:'+',n:'id',t:'Long PK'},
+    {v:'+',n:'currencyPair, timestamp',t:''},
+    {v:'+',n:'bid/ask/mid, volume',t:'BigDecimal'},
+    {v:'+',n:'bestBid, bestAsk',t:'BigDecimal'},
+    {v:'+',n:'spread, orderQty',t:'BigDecimal'},
+    {v:'+',n:'bidDepth, askDepth',t:'String CLOB'},
+    {v:'+',n:'additionalData',t:'String CLOB'},
+  ]},
+  {name:'PostTradeEntity', layer:'Entity', pkg:'entity', color:'oracle', fields:[
+    {v:'+',n:'id',t:'Long PK'},
+    {v:'+',n:'tradeId, currencyPair',t:'String'},
+    {v:'+',n:'tradePrice, aggressorSide',t:''},
+    {v:'+',n:'notional, settlementDate',t:''},
+    {v:'+',n:'buyerLEI, sellerLEI',t:'String'},
+    {v:'+',n:'clearingHouse, execType',t:'String'},
+    {v:'+',n:'additionalData',t:'String CLOB'},
+  ]},
+  {name:'Policy', layer:'Entity', pkg:'entity', color:'spring', fields:[
+    {v:'+',n:'id',t:'Long PK'},
+    {v:'+',n:'name, description',t:'String'},
+    {v:'+',n:'status',t:'PolicyStatus enum'},
+    {v:'+',n:'category, severity',t:'String'},
+    {v:'+',n:'applicablePairs',t:'String'},
+    {v:'+',n:'autoEscalate',t:'boolean'},
+    {v:'+',n:'createdBy, approvedBy',t:'String'},
+    {v:'+',n:'rejectedBy',t:'String'},
+    {v:'+',n:'rules',t:'List<PolicyRule>'},
+  ]},
+  {name:'User', layer:'Entity', pkg:'entity', color:'fame', fields:[
+    {v:'+',n:'userId',t:'Long PK'},
+    {v:'+',n:'username, email',t:'String'},
+    {v:'+',n:'fullName, passwordHash',t:'String'},
+    {v:'+',n:'role',t:'String (VIEWER default)'},
+    {v:'+',n:'department',t:'String'},
+    {v:'+',n:'isAdmin, isActive',t:'boolean'},
+    {v:'+',n:'createdAt',t:'LocalDateTime'},
+  ]},
+  {name:'TopicConfiguration', layer:'Entity', pkg:'entity', color:'kafka', fields:[
+    {v:'+',n:'id',t:'Long PK'},
+    {v:'+',n:'topicName',t:'String UNIQUE'},
+    {v:'+',n:'bootstrapServers',t:'String'},
+    {v:'+',n:'groupId',t:'String'},
+    {v:'+',n:'securityProtocol',t:'SASL_SSL'},
+    {v:'+',n:'sslProtocol',t:'TLSv1.3'},
+    {v:'+',n:'saslMechanism',t:'PLAIN'},
+    {v:'+',n:'saslJaasConfig',t:'String CLOB'},
+    {v:'+',n:'dedupWindowSeconds',t:'int'},
+    {v:'+',n:'dedupKeyFields',t:'String JSON'},
+  ]},
+  {name:'Indicator', layer:'Entity', pkg:'entity', color:'spring', fields:[
+    {v:'+',n:'id',t:'Long PK'},
+    {v:'+',n:'name',t:'String'},
+    {v:'+',n:'script',t:'String CLOB'},
+    {v:'+',n:'type',t:'IndicatorType enum'},
+    {v:'+',n:'isPublic',t:'boolean'},
+    {v:'+',n:'createdBy',t:'String'},
+    {v:'+',n:'usageCount, favoriteCount',t:'int'},
+  ]},
+  {name:'IndicatorResultEntity', layer:'Entity', pkg:'entity', color:'oracle', fields:[
+    {v:'+',n:'id',t:'Long PK'},
+    {v:'+',n:'indicatorId, indicatorName',t:''},
+    {v:'+',n:'currencyPairs',t:'String'},
+    {v:'+',n:'sourceTable',t:'String'},
+    {v:'+',n:'valueMain/Signal/Upper',t:'BigDecimal'},
+    {v:'+',n:'valueLower/Histogram',t:'BigDecimal'},
+    {v:'+',n:'calculatedAt',t:'LocalDateTime'},
+  ]},
+  {name:'DynamicKafkaConsumerService', layer:'Service', pkg:'service', color:'kafka', fields:[
+    {v:'-',n:'topicConfigRepo',t:'Repository'},
+    {v:'-',n:'consumers',t:'Map<String,KafkaConsumer>'},
+    {v:'+',n:'startAll()',t:'void'},
+    {v:'+',n:'startTopic(config)',t:'void'},
+    {v:'+',n:'stopTopic(name)',t:'void'},
+    {v:'+',n:'dispatch(message)',t:'void'},
+  ]},
+  {name:'DeduplicationService', layer:'Service', pkg:'service', color:'spring', fields:[
+    {v:'-',n:'redisTemplate',t:'RedisTemplate'},
+    {v:'-',n:'config',t:'TopicConfiguration'},
+    {v:'+',n:'isDuplicate(key,window)',t:'boolean'},
+    {v:'+',n:'markSeen(key)',t:'void'},
+  ]},
+  {name:'RuleEngineService', layer:'Service', pkg:'service', color:'spring', fields:[
+    {v:'-',n:'policyEngineService',t:''},
+    {v:'-',n:'policyRepo',t:'Repository'},
+    {v:'+',n:'evaluate(message)',t:'List<Breach>'},
+    {v:'+',n:'applyRules(tx, rules)',t:'void'},
+  ]},
+  {name:'OracleBatchWriterService', layer:'Service', pkg:'service', color:'spring', fields:[
+    {v:'-',n:'marketRepo',t:'Repository'},
+    {v:'-',n:'preTradeRepo',t:'Repository'},
+    {v:'-',n:'postTradeRepo',t:'Repository'},
+    {v:'-',n:'deadLetterRepo',t:'Repository'},
+    {v:'+',n:'write(entity)',t:'void'},
+    {v:'+',n:'flush()',t:'void'},
+  ]},
+  {name:'HistoryQueryService', layer:'Service', pkg:'service', color:'accent', fields:[
+    {v:'-',n:'objectMapper',t:'ObjectMapper'},
+    {v:'+',n:'query(pairs,from,to,dataStore)',t:'List<HistoryRecord>'},
+    {v:'-',n:'parseAdditional(json)',t:'Map<String,Object>'},
+    {v:'-',n:'extractDec(map,keys)',t:'BigDecimal'},
+    {v:'-',n:'extractStr(map,keys)',t:'String'},
+    {v:'-',n:'coalesce(primary,fallback)',t:'BigDecimal'},
+  ]},
+  {name:'IndicatorScriptEngine', layer:'Service', pkg:'service/indicator', color:'accent', fields:[
+    {v:'+',n:'execute(script, data)',t:'IndicatorResult'},
+    {v:'+',n:'sma(data, period)',t:'double[]'},
+    {v:'+',n:'ema(data, period)',t:'double[]'},
+    {v:'+',n:'rsi(data, period)',t:'double[]'},
+    {v:'+',n:'bollingerBands(data)',t:'BB'},
+    {v:'+',n:'stdev(data, period)',t:'double[]'},
+  ]},
+  {name:'HistoryController', layer:'Controller', pkg:'controller', color:'spring', fields:[
+    {v:'+',n:'GET /api/history/records',t:'List<HistoryRecord>'},
+    {v:'+',n:'GET /api/history/indicators',t:'List<IndicatorHistoryRecord>'},
+    {v:'+',n:'GET /api/history/backend',t:'Map<String,String>'},
+    {v:'-',n:'dataStore param',t:'ALL|MARKET|PRE_TRADE|POST_TRADE'},
+  ]},
+  {name:'FxTransaction', layer:'Model', pkg:'model', color:'kafka', fields:[
+    {v:'+',n:'transactionId',t:'String'},
+    {v:'+',n:'currencyPair',t:'String'},
+    {v:'+',n:'price, quantity',t:'double'},
+    {v:'+',n:'side',t:'BUY/SELL'},
+    {v:'+',n:'timestamp',t:'long'},
+    {v:'+',n:'source',t:'String'},
+  ]},
+];
+
+const RELATIONS = [
+  {src:'Policy',rel:'One-to-Many',tgt:'PolicyRule',note:'cascade ALL'},
+  {src:'Policy',rel:'One-to-Many',tgt:'PolicyBreach',note:'breach records'},
+  {src:'PolicyRule',rel:'Many-to-One',tgt:'Policy',note:'FK policyId'},
+  {src:'PolicyBreach',rel:'Many-to-One',tgt:'Policy',note:'FK policyId'},
+  {src:'Indicator',rel:'One-to-Many',tgt:'IndicatorPermission',note:'per-user access'},
+  {src:'Indicator',rel:'One-to-Many',tgt:'IndicatorResultEntity',note:'calculated values'},
+  {src:'User',rel:'One-to-Many',tgt:'UserPairGrant',note:'V17 — FK userId'},
+  {src:'User',rel:'One-to-Many',tgt:'UserAttributeGrant',note:'V17 — FK userId'},
+  {src:'DynamicKafkaConsumerService',rel:'Depends on',tgt:'DeduplicationService',note:'duplicate check per message'},
+  {src:'DynamicKafkaConsumerService',rel:'Depends on',tgt:'ValidationEngineService',note:'rule eval per message'},
+  {src:'DynamicKafkaConsumerService',rel:'Depends on',tgt:'RuleEngineService',note:'policy breach detection'},
+  {src:'DynamicKafkaConsumerService',rel:'Depends on',tgt:'OracleBatchWriterService',note:'batch persist'},
+  {src:'DynamicKafkaConsumerService',rel:'Depends on',tgt:'AttributeDiscoveryService',note:'field auto-discovery'},
+  {src:'RuleEngineService',rel:'Depends on',tgt:'PolicyEngineService',note:'breach creation'},
+  {src:'HistoryQueryService',rel:'Depends on',tgt:'MarketDataEntity',note:'JPA read + additionalData fallback'},
+  {src:'HistoryQueryService',rel:'Depends on',tgt:'PreTradeEntity',note:'JPA read + additionalData fallback'},
+  {src:'HistoryQueryService',rel:'Depends on',tgt:'PostTradeEntity',note:'JPA read + additionalData fallback'},
+  {src:'HistoryController',rel:'Depends on',tgt:'HistoryQueryService',note:'routes dataStore param'},
+  {src:'IndicatorExecutionService',rel:'Depends on',tgt:'IndicatorScriptEngine',note:'4GL execution'},
+  {src:'ChartDataController',rel:'Depends on',tgt:'ChartDataService',note:'OHLCV aggregation'},
+  {src:'IndicatorController',rel:'Depends on',tgt:'IndicatorExecutionService',note:'POST /execute'},
+  {src:'KafkaTopicDestinationHandler',rel:'Interface',tgt:'DestinationHandler',note:'implements'},
+  {src:'ParquetDestinationHandler',rel:'Interface',tgt:'DestinationHandler',note:'implements'},
+  {src:'RestApiDestinationHandler',rel:'Interface',tgt:'DestinationHandler',note:'implements'},
+  {src:'MessageQueueDestinationHandler',rel:'Interface',tgt:'DestinationHandler',note:'implements'},
+  {src:'TimeSeriesDbDestinationHandler',rel:'Interface',tgt:'DestinationHandler',note:'implements'},
+  {src:'TopicConfiguration',rel:'One-to-Many',tgt:'KafkaRule',note:'rule config per topic'},
+  {src:'UserPairCatalog',rel:'One-to-Many',tgt:'UserPairGrant',note:'grants reference catalog'},
+  {src:'ChartWorkspace',rel:'One-to-Many',tgt:'ChartComment',note:'V15 — fameStatus tracking'},
+  {src:'ChartComment',rel:'Depends on',tgt:'FameServiceClient',note:'export stub'},
+  {src:'PolicyService',rel:'Depends on',tgt:'PromotionService',note:'DRAFT→ACTIVE flow'},
+  {src:'PolicyService',rel:'Depends on',tgt:'AuditLogService',note:'audit all changes'},
+];
+
+const COLOR_MAP = {oracle:'var(--oracle)',kafka:'var(--kafka)',spring:'var(--spring)',fame:'var(--fame)',accent:'var(--accent)',angular:'var(--angular)'};
+
+function renderClasses(list) {
+  const grid = document.getElementById('classGrid');
+  if (!list.length) { grid.innerHTML = '<div class="empty-state">No matching classes</div>'; return; }
+  grid.innerHTML = list.map(c => `
+    <div class="class-card">
+      <div class="class-card-header" style="color:${COLOR_MAP[c.color]||'var(--text)'}">
+        <span>${c.name}</span>
+        <span class="layer-badge" style="background:color-mix(in srgb,${COLOR_MAP[c.color]||'var(--text)'} 12%,transparent);color:${COLOR_MAP[c.color]||'var(--text)'}">${c.layer}</span>
+      </div>
+      <div class="class-card-body">
+        ${c.fields.map(f => `<div class="field-row"><span class="field-vis">${f.v}</span><span class="field-name">${f.n}</span><span class="field-type">${f.t}</span></div>`).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function filterClasses(q) {
+  const layer = document.getElementById('layerFilter').value;
+  const ql = q.toLowerCase();
+  renderClasses(CLASSES.filter(c => {
+    const matchLayer = !layer || c.layer === layer;
+    const matchQ = !ql || c.name.toLowerCase().includes(ql) || c.fields.some(f => f.n.toLowerCase().includes(ql) || f.t.toLowerCase().includes(ql));
+    return matchLayer && matchQ;
+  }));
+}
+
+function renderRels(list) {
+  const tbody = document.getElementById('relBody');
+  const empty = document.getElementById('relEmpty');
+  if (!list.length) { tbody.innerHTML = ''; empty.style.display = ''; return; }
+  empty.style.display = 'none';
+  const REL_COLOR = {'One-to-Many':'var(--spring)','Many-to-One':'var(--oracle)','Depends on':'var(--accent)','Interface':'var(--fame)'};
+  tbody.innerHTML = list.map(r => `
+    <tr>
+      <td style="font-weight:600;color:var(--text)">${r.src}</td>
+      <td><span class="rel-badge" style="background:color-mix(in srgb,${REL_COLOR[r.rel]||'var(--border)'} 15%,transparent);color:${REL_COLOR[r.rel]||'var(--text2)'}">${r.rel}</span></td>
+      <td style="font-weight:600;color:var(--text)">${r.tgt}</td>
+      <td style="color:var(--text2)">${r.note}</td>
+    </tr>
+  `).join('');
+}
+
+function filterRels(q) {
+  const type = document.getElementById('relTypeFilter').value;
+  const ql = q.toLowerCase();
+  renderRels(RELATIONS.filter(r => {
+    const matchType = !type || r.rel === type;
+    const matchQ = !ql || r.src.toLowerCase().includes(ql) || r.tgt.toLowerCase().includes(ql) || r.note.toLowerCase().includes(ql);
+    return matchType && matchQ;
+  }));
+}
+
+function switchTab(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  event.target.classList.add('active');
+  if (id === 'classes' && !document.getElementById('classGrid').innerHTML) renderClasses(CLASSES);
+  if (id === 'relations' && !document.getElementById('relBody').innerHTML) renderRels(RELATIONS);
+}
+
+// Initial render
+renderClasses(CLASSES);
+renderRels(RELATIONS);
+</script>
+</body>
+</html>
+
+</body></html>
